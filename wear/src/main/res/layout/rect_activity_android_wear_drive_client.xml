@@ -1,15 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context=".AndroidWearDriveClient"
     tools:deviceIds="wear_square">
 
-    <TextView
-        android:id="@+id/text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/hello_square" />
-</LinearLayout>
+<Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="FL"
+    android:id="@+id/btn_fl"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentStart="true"/>
+
+<Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="F"
+    android:id="@+id/btn_f"
+    android:layout_toEndOf="@+id/btn_fl"
+    android:layout_alignBottom="@+id/btn_fl"
+    android:layout_alignParentTop="true"
+    android:layout_toStartOf="@+id/btn_fr"/>
+
+<Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="FR"
+    android:id="@+id/btn_fr"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentEnd="true"/>
+
+<Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="L"
+    android:id="@+id/btn_l"
+    android:layout_below="@+id/btn_fl"
+    android:layout_toStartOf="@+id/btn_f"
+    android:layout_above="@+id/btn_bl"/>
+
+<Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="R"
+    android:id="@+id/btn_r"
+    android:layout_below="@+id/btn_f"
+    android:layout_alignParentEnd="true"
+    android:layout_toEndOf="@+id/btn_f"
+    android:layout_above="@+id/btn_b"/>
+
+<Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="BL"
+    android:id="@+id/btn_bl"
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentStart="true"
+    android:layout_alignEnd="@+id/btn_l"/>
+
+<Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="B"
+    android:id="@+id/btn_b"
+    android:layout_toEndOf="@+id/btn_bl"
+    android:layout_alignBottom="@+id/btn_bl"
+    android:layout_toStartOf="@+id/btn_r"
+    android:layout_below="@+id/btn_l"/>
+
+<Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="BR"
+    android:id="@+id/btn_br"
+    android:layout_alignTop="@+id/btn_b"
+    android:layout_toEndOf="@+id/btn_b"
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentEnd="true"/>
+
+<Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Stop!"
+    android:id="@+id/btn_stop"
+    android:layout_below="@+id/btn_f"
+    android:layout_toEndOf="@+id/btn_fl"
+    android:layout_above="@+id/btn_bl"
+    android:layout_toStartOf="@+id/btn_fr"/>
+
+</RelativeLayout>
