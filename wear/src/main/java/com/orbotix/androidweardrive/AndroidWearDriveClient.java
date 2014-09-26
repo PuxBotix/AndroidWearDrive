@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.android.gms.wearable.MessageEvent;
+
 public class AndroidWearDriveClient extends Activity {
 
 	private TextView mTextView;
@@ -36,7 +38,7 @@ public class AndroidWearDriveClient extends Activity {
 				mBtnFL.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						Drive(315, 1.0f);
+						drive(315, 1.0f);
 					}
 				});
 
@@ -44,7 +46,7 @@ public class AndroidWearDriveClient extends Activity {
 				mBtnF.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						Drive(0, 1.0f);
+						drive(0, 1.0f);
 					}
 				});
 
@@ -52,7 +54,7 @@ public class AndroidWearDriveClient extends Activity {
 				mBtnFR.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						Drive(45, 1.0f);
+						drive(45, 1.0f);
 					}
 				});
 
@@ -60,7 +62,7 @@ public class AndroidWearDriveClient extends Activity {
 				mBtnL.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						Drive(270, 1.0f);
+						drive(270, 1.0f);
 					}
 				});
 
@@ -68,7 +70,7 @@ public class AndroidWearDriveClient extends Activity {
 				mBtnR.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						Drive(90, 1.0f);
+						drive(90, 1.0f);
 					}
 				});
 
@@ -76,7 +78,7 @@ public class AndroidWearDriveClient extends Activity {
 				mBtnBL.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						Drive(225, 1.0f);
+						drive(225, 1.0f);
 					}
 				});
 
@@ -84,7 +86,7 @@ public class AndroidWearDriveClient extends Activity {
 				mBtnB.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						Drive(180, 1.0f);
+						drive(180, 1.0f);
 					}
 				});
 
@@ -92,7 +94,7 @@ public class AndroidWearDriveClient extends Activity {
 				mBtnBR.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						Drive(135, 1.0f);
+						drive(135, 1.0f);
 					}
 				});
 
@@ -100,14 +102,14 @@ public class AndroidWearDriveClient extends Activity {
 				mBtnStop.setOnClickListener(new View.OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						Drive(0, 0f);
+						drive(0, 0f);
 					}
 				});
             }
         });
     }
 
-	private void Drive(int heading, float speed)
+	private void drive(int heading, float speed)
 	{
 
 	}
