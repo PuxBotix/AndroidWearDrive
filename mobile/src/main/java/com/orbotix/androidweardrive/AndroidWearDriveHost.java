@@ -21,9 +21,6 @@ import com.google.android.gms.wearable.Wearable;
 import java.util.Collection;
 import java.util.HashSet;
 
-import orbotix.robot.base.Robot;
-import orbotix.robot.base.RobotProvider;
-import orbotix.sphero.ConnectionListener;
 import orbotix.sphero.Sphero;
 
 import static com.google.android.gms.common.api.GoogleApiClient.Builder;
@@ -75,8 +72,18 @@ public class AndroidWearDriveHost extends Activity {
 	protected void onResume() {
 		super.onResume();
 
-		RobotConnectionHandler connectionHandler = new RobotConnectionHandler(this);
-		RobotProvider.getDefaultProvider().addConnectionListener(connectionHandler);
+		SpheroHandler connectionHandler = new SpheroHandler(this);
+		connectionHandler.setResponseHandler(new SpheroHandler.ISpheroHandlerResponses() {
+			@Override
+			public void SpheroConnected(Sphero sphero) {
+				mRobot = sphero;
+			}
+
+			@Override
+			public void SpheroDisconnected(Sphero sphero) {
+				mRobot = null;
+			}
+		});
 		connectionHandler.findRobots();
 	}
 
@@ -133,7 +140,8 @@ public class AndroidWearDriveHost extends Activity {
 
 	private Collection<String> getNodes() {
 		HashSet<String> results = new HashSet<String>();
-		NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+		NodeApi.GetConnectedNodesResult nodes
+				= Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
 		for (Node node : nodes.getNodes()) {
 			results.add(node.getId());
 			Log.d("AWH", "node " + node.getId() + " found!");
@@ -161,7 +169,8 @@ public class AndroidWearDriveHost extends Activity {
 		@Override
 		public Dialog onCreateDialog(Bundle savedInstanceState) {
 			int errorCode = this.getArguments().getInt(DIALOG_ERROR);
-			return GooglePlayServicesUtil.getErrorDialog(errorCode, this.getActivity(), REQUEST_RESOLVE_ERROR);
+			return GooglePlayServicesUtil.getErrorDialog(errorCode, this.getActivity(),
+					REQUEST_RESOLVE_ERROR);
 		}
 
 		@Override
@@ -212,36 +221,4 @@ public class AndroidWearDriveHost extends Activity {
 		}
 	}
 
-	public class RobotConnectionHandler implements ConnectionListener {
-		private AndroidWearDriveHost mHost;
-
-		public RobotConnectionHandler(AndroidWearDriveHost host) {
-			mHost = host;
-		}
-
-		public void findRobots() {
-			RobotProvider provider = RobotProvider.getDefaultProvider();
-
-			provider.startDiscovery(mHost);
-			provider.initiateConnection("");
-		}
-
-		@Override
-		public void onConnected(Robot robot) {
-			mRobot = (Sphero) robot;
-			Log.d("AWH", "Connected to robot!");
-		}
-
-		@Override
-		public void onConnectionFailed(Robot robot) {
-			Log.d("AWH", "Failed to connect to robot!");
-		}
-
-		@Override
-		public void onDisconnected(Robot robot) {
-			Log.d("AWH", "Disconnected from robot!");
-			mRobot = null;
-			findRobots();
-		}
-	}
 }
