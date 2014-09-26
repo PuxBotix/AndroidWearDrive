@@ -1,12 +1,16 @@
 package com.orbotix.androidweardrive;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.DialogFragment;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
@@ -20,6 +24,10 @@ import java.util.HashSet;
 */
 public class AndroidWearServiceHandler
 		implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+
+	private static final String DIALOG_ERROR = "dialog_error";
+
+	private static final int REQUEST_RESOLVE_ERROR = 1001;
 
 	private GoogleApiClient mGoogleApiClient;
 	private AndroidWearDriveHost mHost;
@@ -67,7 +75,7 @@ public class AndroidWearServiceHandler
 
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		// we're invoked with REQUEST_RESOLVE_ERROR when resolving a Google API error
-		if (requestCode == AndroidWearDriveHost.REQUEST_RESOLVE_ERROR) {
+		if (requestCode == REQUEST_RESOLVE_ERROR) {
 			mResolvingError = false;
 			if (resultCode == Activity.RESULT_OK) {
 				// retry connection if we aren't already
@@ -103,7 +111,7 @@ public class AndroidWearServiceHandler
 		else if (connectionResult.hasResolution()) {
 			try {
 				mResolvingError = true;
-				connectionResult.startResolutionForResult(mHost, AndroidWearDriveHost.REQUEST_RESOLVE_ERROR);
+				connectionResult.startResolutionForResult(mHost, REQUEST_RESOLVE_ERROR);
 			}
 			catch (IntentSender.SendIntentException e) {
 				// try again if we fail to resolve the error
@@ -111,8 +119,41 @@ public class AndroidWearServiceHandler
 			}
 		}
 		else {
-			mHost.showErrorDialog(connectionResult.getErrorCode());
+			showErrorDialog(connectionResult.getErrorCode());
 			mResolvingError = true;
+		}
+	}
+
+	// generic error dialog code
+	public void showErrorDialog(int errorCode) {
+		// an error dialog
+		ErrorDialogFragment dialogFragment = new ErrorDialogFragment();
+		dialogFragment.setServiceHandler(this);
+		Bundle args = new Bundle();
+		args.putInt(DIALOG_ERROR, errorCode);
+		dialogFragment.setArguments(args);
+		dialogFragment.show(mHost.getFragmentManager(), "errordialog");
+	}
+
+	public static class ErrorDialogFragment extends DialogFragment {
+		private AndroidWearServiceHandler mHandler;
+
+		public ErrorDialogFragment() {}
+
+		public void setServiceHandler(AndroidWearServiceHandler handler) {
+			mHandler = handler;
+		}
+
+		@Override
+		public Dialog onCreateDialog(Bundle savedInstanceState) {
+			int errorCode = this.getArguments().getInt(DIALOG_ERROR);
+			return GooglePlayServicesUtil.getErrorDialog(errorCode, this.getActivity(),
+					REQUEST_RESOLVE_ERROR);
+		}
+
+		@Override
+		public void onDismiss(DialogInterface dialog) {
+			mHandler.errorDialogDismissed();
 		}
 	}
 }

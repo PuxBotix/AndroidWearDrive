@@ -1,16 +1,11 @@
 package com.orbotix.androidweardrive;
 
 import android.app.Activity;
-import android.app.Dialog;
-import android.app.DialogFragment;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
-
-import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import orbotix.sphero.Sphero;
 
@@ -20,9 +15,6 @@ public class AndroidWearDriveHost extends Activity {
 	private static final String SPHERO_CONNECTED_EVENT = "/awdh/SpheroConnected";
 
 	public static final String STATE_RESOLVING_ERROR = "resolving_error";
-
-	public static final int REQUEST_RESOLVE_ERROR = 1001;
-	private static final String DIALOG_ERROR = "dialog_error";
 
 	private AndroidWearServiceHandler mAndroidWearServiceHandler;
 
@@ -108,36 +100,6 @@ public class AndroidWearDriveHost extends Activity {
 	private void drive(int heading, float speed) {
 		if (mRobot != null) {
 			mRobot.drive(heading, speed);
-		}
-	}
-
-	// generic error dialog code
-	public void showErrorDialog(int errorCode) {
-		// an error dialog
-		ErrorDialogFragment dialogFragment = new ErrorDialogFragment();
-		Bundle args = new Bundle();
-		args.putInt(DIALOG_ERROR, errorCode);
-		dialogFragment.setArguments(args);
-		dialogFragment.show(getFragmentManager(), "errordialog");
-	}
-
-	public void onDialogDismissed() {
-		mAndroidWearServiceHandler.errorDialogDismissed();
-	}
-
-	public static class ErrorDialogFragment extends DialogFragment {
-		public ErrorDialogFragment() {}
-
-		@Override
-		public Dialog onCreateDialog(Bundle savedInstanceState) {
-			int errorCode = this.getArguments().getInt(DIALOG_ERROR);
-			return GooglePlayServicesUtil.getErrorDialog(errorCode, this.getActivity(),
-					REQUEST_RESOLVE_ERROR);
-		}
-
-		@Override
-		public void onDismiss(DialogInterface dialog) {
-			((AndroidWearDriveHost)getActivity()).onDialogDismissed();
 		}
 	}
 
