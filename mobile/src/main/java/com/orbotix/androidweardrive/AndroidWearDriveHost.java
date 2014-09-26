@@ -21,13 +21,17 @@ import com.google.android.gms.wearable.Wearable;
 import java.util.Collection;
 import java.util.HashSet;
 
+import orbotix.robot.base.Robot;
+import orbotix.robot.base.RobotProvider;
+import orbotix.sphero.ConnectionListener;
+import orbotix.sphero.Sphero;
+
 import static com.google.android.gms.common.api.GoogleApiClient.Builder;
 import static com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import static com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 
 
-public class AndroidWearDriveHost extends Activity
-		implements ConnectionCallbacks, OnConnectionFailedListener {
+public class AndroidWearDriveHost extends Activity {
 
 	private static final String STATE_RESOLVING_ERROR = "resolving_error";
 
@@ -37,6 +41,8 @@ public class AndroidWearDriveHost extends Activity
 	private GoogleApiClient mGoogleApiClient;
 	private boolean mResolvingError = false;
 
+	private Sphero mRobot;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -45,12 +51,15 @@ public class AndroidWearDriveHost extends Activity
 		mResolvingError = savedInstanceState != null
 				&& savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
+		GooglePlayServicesHandler playServicesHandler = new GooglePlayServicesHandler(this);
+
 		// request a google api client for the wearable api
 		mGoogleApiClient = new Builder(this)
-				.addConnectionCallbacks(this)
-				.addOnConnectionFailedListener(this)
+				.addConnectionCallbacks(playServicesHandler)
+				.addOnConnectionFailedListener(playServicesHandler)
 				.addApi(Wearable.API)
 				.build();
+
 	}
 
 	@Override
@@ -63,9 +72,22 @@ public class AndroidWearDriveHost extends Activity
 	}
 
 	@Override
+	protected void onResume() {
+		super.onResume();
+
+		RobotConnectionHandler connectionHandler = new RobotConnectionHandler(this);
+		RobotProvider.getDefaultProvider().addConnectionListener(connectionHandler);
+		connectionHandler.findRobots();
+	}
+
+	@Override
 	protected void onStop() {
 		// disconnect from all the things
 		mGoogleApiClient.disconnect();
+
+		if (mRobot != null) {
+			mRobot.disconnect();
+		}
 		super.onStop();
 	}
 
@@ -119,39 +141,6 @@ public class AndroidWearDriveHost extends Activity
 		return results;
 	}
 
-	@Override
-	public void onConnected(Bundle bundle) {
-		Log.d("AWH", "Connected to wear API!");
-	}
-
-	@Override
-	public void onConnectionSuspended(int i) {
-		Log.d("AWH", "Connection Suspended!");
-	}
-
-	@Override
-	public void onConnectionFailed(ConnectionResult connectionResult) {
-		if (mResolvingError) {
-			return;
-		}
-
-		// we failed to connect to the google api service, try to resolve
-		else if (connectionResult.hasResolution()) {
-			try {
-				mResolvingError = true;
-				connectionResult.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
-			}
-			catch (IntentSender.SendIntentException e) {
-				// try again if we fail to resolve the error
-				mGoogleApiClient.connect();
-			}
-		}
-		else {
-			showErrorDialog(connectionResult.getErrorCode());
-			mResolvingError = true;
-		}
-	}
-
 	// generic error dialog code
 	private void showErrorDialog(int errorCode) {
 		// an error dialog
@@ -178,6 +167,81 @@ public class AndroidWearDriveHost extends Activity
 		@Override
 		public void onDismiss(DialogInterface dialog) {
 			((AndroidWearDriveHost)getActivity()).onDialogDismissed();
+		}
+	}
+
+	private class GooglePlayServicesHandler
+			implements ConnectionCallbacks, OnConnectionFailedListener {
+		AndroidWearDriveHost mHost;
+
+		public GooglePlayServicesHandler(AndroidWearDriveHost host) {
+			mHost = host;
+		}
+
+		@Override
+		public void onConnected(Bundle bundle) {
+			Log.d("AWH", "Connected to wear API!");
+		}
+
+		@Override
+		public void onConnectionSuspended(int i) {
+			Log.d("AWH", "Connection Suspended!");
+		}
+
+		@Override
+		public void onConnectionFailed(ConnectionResult connectionResult) {
+			if (mResolvingError) {
+				return;
+			}
+
+			// we failed to connect to the google api service, try to resolve
+			else if (connectionResult.hasResolution()) {
+				try {
+					mResolvingError = true;
+					connectionResult.startResolutionForResult(mHost, REQUEST_RESOLVE_ERROR);
+				}
+				catch (IntentSender.SendIntentException e) {
+					// try again if we fail to resolve the error
+					mGoogleApiClient.connect();
+				}
+			}
+			else {
+				showErrorDialog(connectionResult.getErrorCode());
+				mResolvingError = true;
+			}
+		}
+	}
+
+	public class RobotConnectionHandler implements ConnectionListener {
+		private AndroidWearDriveHost mHost;
+
+		public RobotConnectionHandler(AndroidWearDriveHost host) {
+			mHost = host;
+		}
+
+		public void findRobots() {
+			RobotProvider provider = RobotProvider.getDefaultProvider();
+
+			provider.startDiscovery(mHost);
+			provider.initiateConnection("");
+		}
+
+		@Override
+		public void onConnected(Robot robot) {
+			mRobot = (Sphero) robot;
+			Log.d("AWH", "Connected to robot!");
+		}
+
+		@Override
+		public void onConnectionFailed(Robot robot) {
+			Log.d("AWH", "Failed to connect to robot!");
+		}
+
+		@Override
+		public void onDisconnected(Robot robot) {
+			Log.d("AWH", "Disconnected from robot!");
+			mRobot = null;
+			findRobots();
 		}
 	}
 }

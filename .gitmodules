@@ -1,0 +1,3 @@
+[submodule "Sphero-Android-SDK"]
+	path = Sphero-Android-SDK
+	url = git@github.com:orbotix/Sphero-Android-SDK.git
