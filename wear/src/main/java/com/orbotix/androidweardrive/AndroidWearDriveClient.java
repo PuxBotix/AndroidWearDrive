@@ -4,10 +4,9 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.support.wearable.view.WatchViewStub;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
-
-import com.google.android.gms.wearable.MessageEvent;
 
 public class AndroidWearDriveClient extends Activity {
 
@@ -107,7 +106,19 @@ public class AndroidWearDriveClient extends Activity {
 				});
             }
         });
+
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+	}
+
+	@Override
+	protected  void onStop() {
+		super.onStop();
+	}
 
 	private void drive(int heading, float speed)
 	{

@@ -12,6 +12,8 @@ import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
@@ -23,18 +25,25 @@ import java.util.HashSet;
 * Created by Pux0r3 on 9/26/14.
 */
 public class AndroidWearServiceHandler
-		implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+		implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
+			NodeApi.NodeListener, MessageApi.MessageListener {
 
 	private static final String DIALOG_ERROR = "dialog_error";
 
 	private static final int REQUEST_RESOLVE_ERROR = 1001;
+	private static final String SPHERO_CONNECTED_EVENT = "/awdh/SpheroConnected";
 
 	private GoogleApiClient mGoogleApiClient;
 	private AndroidWearDriveHost mHost;
 	private boolean mResolvingError = false;
 
+	private boolean mSpheroConnected;
+
+	private HashSet<String> mConnectedNodes;
+
 	public AndroidWearServiceHandler(AndroidWearDriveHost host, Bundle savedInstanceState) {
 		mHost = host;
+		mConnectedNodes = new HashSet<String>();
 
 		// request a google api client for the wearable api
 		mGoogleApiClient = new GoogleApiClient.Builder(mHost)
@@ -47,15 +56,23 @@ public class AndroidWearServiceHandler
 				&& savedInstanceState.getBoolean(AndroidWearDriveHost.STATE_RESOLVING_ERROR, false);
 	}
 
-	private Collection<String> getNodes() {
-		HashSet<String> results = new HashSet<String>();
-		NodeApi.GetConnectedNodesResult nodes
-				= Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
-		for (Node node : nodes.getNodes()) {
-			results.add(node.getId());
-			Log.d("AWH", "node " + node.getId() + " found!");
+	public void notifySpheroConnected(boolean connected) {
+		mSpheroConnected = connected;
+		if (connected) {
+			notifyAllNodesSpheroConnected();
 		}
-		return results;
+	}
+
+	private void notifyAllNodesSpheroConnected() {
+		synchronized (this) {
+			for (String node : mConnectedNodes) {
+				notifyNodeSpheroConnected(node);
+			}
+		}
+	}
+
+	private void notifyNodeSpheroConnected(String node) {
+		Wearable.MessageApi.sendMessage(mGoogleApiClient, node, SPHERO_CONNECTED_EVENT, null);
 	}
 
 	public void onStart() {
@@ -66,7 +83,11 @@ public class AndroidWearServiceHandler
 	}
 
 	public void onStop() {
-		mGoogleApiClient.disconnect();
+		if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+			Wearable.NodeApi.removeListener(mGoogleApiClient, this);
+			Wearable.MessageApi.removeListener(mGoogleApiClient, this);
+			mGoogleApiClient.disconnect();
+		}
 	}
 
 	public void onSaveInstance(Bundle outState) {
@@ -87,13 +108,36 @@ public class AndroidWearServiceHandler
 		}
 	}
 
-	public void errorDialogDismissed() {
-		mResolvingError = false;
-	}
-
 	@Override
 	public void onConnected(Bundle bundle) {
 		Log.d("AWH", "Connected to wear API!");
+		Wearable.NodeApi.addListener(mGoogleApiClient, this);
+		Wearable.MessageApi.addListener(mGoogleApiClient, this);
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				Collection<String> connectedNodes = getNodes();
+				synchronized (AndroidWearServiceHandler.this) {
+					mConnectedNodes.clear();
+					mConnectedNodes.addAll(connectedNodes);
+					if (mSpheroConnected) {
+						notifyAllNodesSpheroConnected();
+					}
+				}
+			}
+		}).start();
+	}
+
+	private Collection<String> getNodes() {
+		HashSet<String> results = new HashSet<String>();
+		NodeApi.GetConnectedNodesResult nodes
+				= Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+		for (Node node : nodes.getNodes()) {
+			results.add(node.getId());
+			Log.d("AWH", "node " + node.getId() + " found!");
+		}
+		return results;
 	}
 
 	@Override
@@ -122,6 +166,32 @@ public class AndroidWearServiceHandler
 			showErrorDialog(connectionResult.getErrorCode());
 			mResolvingError = true;
 		}
+	}
+
+	@Override
+	public void onPeerConnected(Node node) {
+		Log.d("AWH", "onPeerConnected(" + node + ")");
+		synchronized (this) {
+			mConnectedNodes.add(node.getId());
+			notifyNodeSpheroConnected(node.getId());
+		}
+	}
+
+	@Override
+	public void onPeerDisconnected(Node node) {
+		Log.d("AWH", "onPeerDisconnected(" + node + ")");
+		synchronized (this) {
+			mConnectedNodes.remove(node.getId());
+		}
+	}
+
+	@Override
+	public void onMessageReceived(MessageEvent messageEvent) {
+		Log.d("AWH", "onMessageReceived");
+	}
+
+	public void errorDialogDismissed() {
+		mResolvingError = false;
 	}
 
 	// generic error dialog code

@@ -12,8 +12,6 @@ import orbotix.sphero.Sphero;
 
 public class AndroidWearDriveHost extends Activity {
 
-	private static final String SPHERO_CONNECTED_EVENT = "/awdh/SpheroConnected";
-
 	public static final String STATE_RESOLVING_ERROR = "resolving_error";
 
 	private AndroidWearServiceHandler mAndroidWearServiceHandler;
@@ -46,11 +44,13 @@ public class AndroidWearDriveHost extends Activity {
 			@Override
 			public void SpheroConnected(Sphero sphero) {
 				mRobot = sphero;
+				mAndroidWearServiceHandler.notifySpheroConnected(true);
 			}
 
 			@Override
 			public void SpheroDisconnected(Sphero sphero) {
 				mRobot = null;
+				mAndroidWearServiceHandler.notifySpheroConnected(false);
 			}
 		});
 		connectionHandler.findRobots();
